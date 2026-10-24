@@ -8,7 +8,8 @@
 // reading is redone on every cycle (10 minutes), even when the nowcast did
 // not change: the hour did. Guards: the first reading of a house after a
 // start is a baseline, it never fires (a restart during a shower must not
-// announce it again); a house fires at most once an hour.
+// announce it again); a gap in the nowcast keeps the previous reading as the
+// baseline; a house fires at most once an hour.
 //
 // "Hong Kong warning changed" (warning_changed). After each cycle, the
 // warnings in force are compared with the previous reading (warnings.js
@@ -35,6 +36,21 @@ const SCENE_TRIGGERS = Object.freeze({
 });
 
 const COOLDOWN_MS = 60 * 60 * 1000;
+
+// The SDK refuses a scene event holding a string longer than this
+// (MAX_SCENE_EVENT_STRING_LENGTH): the whole event would be lost.
+const MAX_EVENT_STRING = 1000;
+
+/**
+ * @description Cut a text to the longest string a scene event may carry.
+ * @param {string} text - The text.
+ * @returns {string} The text, cut with an ellipsis when too long.
+ * @example
+ * bounded('a'.repeat(3000)).length; // -> 1000
+ */
+function bounded(text) {
+  return text.length <= MAX_EVENT_STRING ? text : `${text.slice(0, MAX_EVENT_STRING - 1)}…`;
+}
 
 /**
  * @description Build the event data of the rain trigger: flat, the filter
@@ -72,7 +88,7 @@ function buildWarningEventData(house, change, { language }) {
     house_name: house.name,
     signal: warning.code,
     name: warningName(warning, language),
-    description: warning.contents.slice(0, 2000),
+    description: bounded(warning.contents),
     summary: warningChangeSentence(change, language),
   };
 }
@@ -127,7 +143,12 @@ function createWatcher({ publish, getLanguage, getUnits, logger = console, now =
     const reading = readNextHour(nowcast, now());
     const state = rain.get(house.id) ?? { reading: null, lastFiredAt: null };
     const announced = isRainAnnounced(state.reading, reading);
-    rain.set(house.id, { ...state, reading });
+    // A gap in the nowcast (download failed, file too old) is no reading:
+    // the last available one stays the baseline, so rain announced by the
+    // next file still fires.
+    if (reading.available) {
+      rain.set(house.id, { ...state, reading });
+    }
     if (!announced) {
       return null;
     }
@@ -195,4 +216,11 @@ function createWatcher({ publish, getLanguage, getUnits, logger = console, now =
   return { observeRain, observeWarnings, forget };
 }
 
-export { COOLDOWN_MS, SCENE_TRIGGERS, buildRainEventData, buildWarningEventData, createWatcher };
+export {
+  COOLDOWN_MS,
+  MAX_EVENT_STRING,
+  SCENE_TRIGGERS,
+  buildRainEventData,
+  buildWarningEventData,
+  createWatcher,
+};

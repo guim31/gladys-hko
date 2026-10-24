@@ -41,9 +41,10 @@ const USER_AGENT = 'gladys-hko (+https://github.com/guim31/gladys-hko)';
 
 // A weather request of the core waits 15 s: the small JSON answers must fit.
 const JSON_TIMEOUT_MS = 10000;
-// The nowcast is a 2.7 MB file the Observatory serves slowly (over a minute
-// from Europe); only the scheduler downloads it, never a weather request.
-const NOWCAST_TIMEOUT_MS = 150000;
+// The nowcast is a 2.7 MB file the Observatory serves slowly (two minutes
+// from Europe, 21 kB/s); only the scheduler downloads it, in the background,
+// never a weather request.
+const NOWCAST_TIMEOUT_MS = 240000;
 
 const ERROR_KINDS = Object.freeze({
   NETWORK: 'network',

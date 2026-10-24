@@ -161,6 +161,10 @@ function parseWarnings(summary, info = null) {
  * toAlerts(warnings, (warning) => warning.name);
  */
 function toAlerts(warnings, nameOf) {
+  // The core keys its alert trigger on `type`: two alerts of one type (cold
+  // and frost) would hide each other's end. Only the most severe of each
+  // type is typed (the list is sorted), the others go by their name.
+  const typed = new Set();
   return warnings.slice(0, 10).map((warning) => {
     const alert = { severity: warning.severity, event: nameOf(warning).slice(0, 100) };
     if (warning.contents !== '') {
@@ -172,8 +176,10 @@ function toAlerts(warnings, nameOf) {
     if (warning.expiresAt !== null) {
       alert.end = new Date(warning.expiresAt).toISOString();
     }
-    if (PIVOT_TYPES[warning.type] !== undefined) {
-      alert.type = PIVOT_TYPES[warning.type];
+    const type = PIVOT_TYPES[warning.type];
+    if (type !== undefined && !typed.has(type)) {
+      typed.add(type);
+      alert.type = type;
     }
     return alert;
   });

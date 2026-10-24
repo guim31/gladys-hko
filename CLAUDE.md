@@ -16,8 +16,8 @@ its only runtime dependency. It started from the official JavaScript template.
 ```bash
 npm install
 npm test                                  # node --test, the built-in runner
-node --test test/devices.test.js          # one file
-node --test --test-name-pattern "plug"    # tests whose name matches
+node --test test/app.test.js              # one file
+node --test --test-name-pattern "typhoon" # tests whose name matches
 npm run lint                              # ESLint
 npm run format:check                      # Prettier, as the CI runs it
 npm run format                            # Prettier, fix in place
@@ -263,7 +263,8 @@ long, et sur un « Sie »/« Ihr… » de politesse en allemand. Le store exige 
 - Prévision immédiate : `https://data.weather.gov.hk/weatherAPI/hko_data/F3/Gridded_rainfall_nowcast.csv`,
   grille 121 × 121 (~2 km) sur le delta de la rivière des Perles, 4 pas d'une demi-heure, mm cumulés,
   heure de Hong Kong `YYYYMMDDHHmm`. **2,7 Mo, sans gzip, servi lentement** (30 à 80 s depuis la France) :
-  seul le minuteur le télécharge (150 s max), toutes les 30 min ; jamais une requête météo du cœur.
+  seul le minuteur le télécharge, **en tâche de fond après le cycle** (240 s max, 128 s mesurées
+  depuis la France à 21 Ko/s), toutes les 30 min ; jamais une requête météo du cœur.
 - Réponses réelles du 24/10/2026 dans `test/fixtures/` (voir leur README) ; le typhon et la pluie ambre
   sont écrits à la main au format documenté (aucun en cours ce jour-là).
 
@@ -283,6 +284,11 @@ long, et sur un « Sie »/« Ihr… » de politesse en allemand. Le store exige 
   direction, premier Beaufort (haut de la fourchette), converti au milieu de la bande.
 - Hong Kong reste en UTC+8 toute l'année : les jours sont coupés à minuit de Hong Kong, pas au `TZ` de
   Gladys.
+- Le SDK refuse tout l'événement de scène si une chaîne dépasse **1000 caractères**
+  (`MAX_SCENE_EVENT_STRING_LENGTH`) : les textes d'un signal n° 8 dépassent souvent, `description` est
+  coupée à 1000 (relecture du 24/10).
+- Le cœur identifie une alerte du pivot par son `type` : un seul avertissement typé par type (froid et gel
+  partageraient `cold`).
 - Une panne réseau ou 5xx fait échouer tous les jeux de données : **une seule** ligne `warn` (clé
   commune), la prévision immédiate a sa propre ligne `info`.
 - Locale de la machine de dev en `fr_FR` : `awk` y lit « 22.15 » de travers ; `LC_ALL=C` pour retailler

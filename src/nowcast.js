@@ -134,8 +134,8 @@ function intensityOfRate(rate) {
  * @param {object|null} nowcast - A parseNowcast() entry.
  * @param {number} now - The current time in ms.
  * @returns {object} `{ available: false }`, or `{ available: true, wetNow,
- * minutesUntil (null when dry), intensity, amount (mm over the steps of the
- * hour), start (ms) }`.
+ * minutesUntil (null when dry), intensity, amount (mm within the hour, each
+ * step prorated), start (ms) }`.
  * @example
  * readNextHour(nowcast, Date.now());
  */
@@ -147,7 +147,10 @@ function readNextHour(nowcast, now) {
   if (!covered) {
     return { available: false };
   }
-  const amount = Math.round(steps.reduce((sum, step) => sum + step.mm, 0) * 10) / 10;
+  // Each step counts for the part of it inside the hour.
+  const inside = (step) =>
+    (Math.min(step.end, now + WINDOW_MS) - Math.max(step.start, now)) / (step.end - step.start);
+  const amount = Math.round(steps.reduce((sum, step) => sum + step.mm * inside(step), 0) * 10) / 10;
   const wet = steps.filter((step) => step.mm >= WET_MM);
   if (wet.length === 0) {
     return {

@@ -28,8 +28,8 @@ comunitario, no afiliado al Observatorio de Hong Kong.
   inundaciones en el norte de los Nuevos Territorios, deslizamientos de
   tierra, monzón fuerte, tiempo muy caluroso, tiempo frío, heladas, peligro
   de incendio y tsunami. El disparador de escena **alerta meteorológica**
-  integrado en Gladys funciona con ellos y se activa en el minuto siguiente a
-  un cambio.
+  integrado en Gladys funciona con ellos y se activa unos diez minutos después
+  de un cambio.
 - **Disparador de escena «Aviso de Hong Kong modificado»**: una señal
   emitida, elevada (n.º 3 → n.º 8, ámbar → rojo), rebajada, actualizada o
   cancelada, con una frase en su idioma.
@@ -254,8 +254,8 @@ disponibles** es no.
   frecuencia.
 - **«Obtener la lluvia de la próxima hora» indica que la predicción no está
   disponible** — la descarga de 2,7 MB falló o tardó demasiado (el
-  Observatorio la sirve despacio fuera de Hong Kong): se reintenta 2 minutos
-  después como pronto.
+  Observatorio la sirve despacio fuera de Hong Kong): se reintenta en la siguiente
+  actualización, 10 minutos después.
 - **El panel sigue mostrando otro proveedor** — abra los ajustes del widget
   del tiempo y elija Hong Kong Observatory.
 - **Registros**: la pestaña **Registros** de la integración (o `docker logs`

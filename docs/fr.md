@@ -28,7 +28,7 @@ communautaire, non affilié à l’Observatoire de Hong Kong.
   le nord des Nouveaux Territoires, glissements de terrain, mousson forte,
   très fortes chaleurs, temps froid, gel, risque d’incendie et tsunami. Le
   déclencheur de scène **alerte météo** intégré à Gladys fonctionne avec eux,
-  et se déclenche dans la minute qui suit un changement.
+  et se déclenche une dizaine de minutes après un changement.
 - **Déclencheur de scène « Avertissement de Hong Kong modifié »** : un signal
   émis, relevé (n° 3 → n° 8, ambre → rouge), abaissé, mis à jour ou levé,
   avec une phrase dans votre langue.
@@ -125,10 +125,10 @@ Filtres facultatifs (vides : tout correspond) :
 - **Maison** ;
 - **Changement** : émis, relevé, abaissé, mis à jour, levé ;
 - **Gravité** : mineure (signal d’alerte n° 1), modérée (n° 3, annonce avant
-  le n° 8, pluies ambre, orages, très fortes chaleurs, froid, gel, mousson
-  forte, risque d’incendie jaune), sévère (n° 8, pluies rouge, glissements de
+  le n° 8, alerte pluies ambre, orages, très fortes chaleurs, froid, gel, mousson
+  forte, risque d’incendie jaune), sévère (n° 8, alerte pluies rouge, glissements de
   terrain, inondations, risque d’incendie rouge), extrême (n° 9, n° 10,
-  pluies noire, tsunami) ;
+  alerte pluies noire, tsunami) ;
 - **Phénomène** : cyclone tropical, pluies diluviennes, orages, inondations,
   glissements de terrain, mousson forte, très fortes chaleurs, temps froid,
   gel, risque d’incendie, tsunami, autre.
@@ -182,7 +182,7 @@ Action : lit la prévision d’**aujourd’hui** ou de **demain** et renvoie :
 - le vent, lu dans le texte de la prévision ;
 - le texte de la prévision de l’Observatoire (en anglais) ;
 - un **résumé**, par exemple : « Demain : ciel dégagé, 25 à 31 °C,
-  probabilité de pluie significative faible. »
+  probabilité faible de pluie significative. »
 
 La prévision à 9 jours commence au lendemain une fois la mise à jour du matin
 publiée : **aujourd’hui** donne alors le ciel actuel et le texte de la
@@ -256,8 +256,8 @@ injoignable, **Avertissements disponibles** vaut non.
   L’intégration réessaie après 5 minutes, puis de moins en moins souvent.
 - **« Obtenir la pluie de l’heure à venir » dit la prévision indisponible** —
   le téléchargement de 2,7 Mo a échoué ou a pris trop de temps
-  (l’Observatoire le sert lentement hors de Hong Kong) : il est retenté 2
-  minutes plus tard au plus tôt.
+  (l’Observatoire le sert lentement hors de Hong Kong) : il est retenté à la
+  mise à jour suivante, 10 minutes plus tard.
 - **Le tableau de bord affiche encore un autre fournisseur** — ouvrez les
   réglages du widget météo et choisissez Hong Kong Observatory.
 - **Journaux** : l’onglet **Journaux** de l’intégration (ou `docker logs` sur

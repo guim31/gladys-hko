@@ -15,6 +15,10 @@
 // integration has no devices. It is a chain of timeouts rather than an
 // interval, so that a failed cycle retried sooner re-plans cleanly.
 //
+// The rainfall nowcast (2.7 MB, over two minutes to download from far
+// away) is fetched in the background once the cycle is done: a warning change
+// must not wait for it. When a new file arrives, `onNowcast` reads it.
+//
 // A cycle stops at a 429 or a 403, which would repeat for every data set. When
 // every call of a cycle failed for a passing reason (network, 5xx), the next
 // try comes after 5, 10, 20, 40, then 60 minutes. Cycles never overlap: a
@@ -31,13 +35,13 @@ const JITTER_MS = 2 * 60 * 1000;
 const RETRY_FIRST_MS = 5 * 60 * 1000;
 const RETRY_MAX_MS = 60 * 60 * 1000;
 
-// In this order: the warnings first, they matter most.
+// In this order: the warnings first, they matter most. The nowcast is not
+// in the list: its slow download runs beside the cycle (see cycle()).
 const CYCLE_DATASETS = Object.freeze([
   DATASETS.warnings,
   DATASETS.current,
   DATASETS.forecast,
   DATASETS.local,
-  DATASETS.nowcast,
 ]);
 
 /**
@@ -48,6 +52,8 @@ const CYCLE_DATASETS = Object.freeze([
  * @param {Function} [options.onCycle] - `(summary) => Promise|void`, called at
  * the end of each cycle with `{ houses, inArea, refreshed, failed, error,
  * delayMs }` (`inArea`: the located houses in Hong Kong).
+ * @param {Function} [options.onNowcast] - `() => Promise|void`, called when a
+ * new nowcast file was downloaded.
  * @param {object} [options.logger] - Logger with info/warn/debug.
  * @param {Function} [options.now] - `() => ms`, for the tests.
  * @param {Function} [options.random] - `() => [0, 1)`, for the tests.
@@ -61,6 +67,7 @@ function createScheduler({
   houses,
   store,
   onCycle = () => {},
+  onNowcast = () => {},
   logger = console,
   now = Date.now,
   random = Math.random,
@@ -72,7 +79,40 @@ function createScheduler({
   let queued = false;
   let started = false;
   let failedCycles = 0;
+  let nowcastRun = null;
   const failures = createFailureLog(logger);
+
+  /**
+   * @description Download the nowcast in the background, if it expired and
+   * no download runs; `onNowcast` once a new file is in.
+   * @example
+   * refreshNowcast();
+   */
+  function refreshNowcast() {
+    if (nowcastRun !== null || store.blockedError() !== null) {
+      return;
+    }
+    const before = store.peek(DATASETS.nowcast)?.fetchedAt ?? null;
+    nowcastRun = store
+      .refresh(DATASETS.nowcast)
+      .then(async (entry) => {
+        if (entry.fetchedAt !== before) {
+          await onNowcast();
+        }
+        failures.recover('nowcast', 'Nowcast handling works again');
+      })
+      .catch((err) => {
+        if (err.kind === undefined) {
+          failures.fail('nowcast', `Nowcast handling failed: ${err.message}`);
+        } else {
+          // The store already logged the failure, once.
+          logger.debug(`Refresh of the nowcast failed: ${err.message}`);
+        }
+      })
+      .finally(() => {
+        nowcastRun = null;
+      });
+  }
 
   /**
    * @description Arm the next cycle.
@@ -139,10 +179,7 @@ function createScheduler({
           refreshed += 1;
         } catch (err) {
           failedCount += 1;
-          // The nowcast is a bonus: its failure alone is no outage.
-          if (name !== DATASETS.nowcast) {
-            error = err;
-          }
+          error = err;
           // The store already logged the failure, once.
           logger.debug(`Refresh of ${name} failed: ${err.message}`);
           if (err.kind === ERROR_KINDS.THROTTLED || err.kind === ERROR_KINDS.FORBIDDEN) {
@@ -170,6 +207,9 @@ function createScheduler({
     }
     failures.recover('cycle', 'Refresh cycles run again');
     schedule(delayMs);
+    if (inArea.length > 0) {
+      refreshNowcast();
+    }
     return summary;
   }
 
@@ -220,14 +260,14 @@ function createScheduler({
 
   /**
    * @description Wait for the cycle under way, if any (and the one queued
-   * behind it).
+   * behind it), and for the nowcast download.
    * @returns {Promise<void>} Resolves once no cycle runs.
    * @example
    * await scheduler.settled();
    */
   async function settled() {
-    while (running !== null) {
-      await running;
+    while (running !== null || nowcastRun !== null) {
+      await (running ?? nowcastRun);
     }
   }
 

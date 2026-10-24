@@ -28,7 +28,7 @@ Community-Projekt und nicht mit dem Hong Kong Observatory verbunden.
   Überschwemmungen in den nördlichen New Territories, Erdrutsch, starker
   Monsun, sehr heißes Wetter, kaltes Wetter, Frost, Waldbrandgefahr und
   Tsunami. Der eingebaute Szenenauslöser **Wetterwarnung** von Gladys
-  funktioniert damit und löst innerhalb einer Minute nach einer Änderung aus.
+  funktioniert damit und löst etwa zehn Minuten nach einer Änderung aus.
 - **Szenenauslöser „Warnung in Hongkong geändert“**: ein Signal ausgegeben,
   hochgestuft (Nr. 3 → Nr. 8, Bernstein → Rot), herabgestuft, aktualisiert
   oder aufgehoben, mit einem Satz in deiner Sprache.
@@ -257,7 +257,7 @@ Waldbrandwarnung Rot.“ Ist das Observatorium nicht erreichbar, ist
 - **„Regen der nächsten Stunde abrufen“ meldet die Vorhersage als nicht
   verfügbar** — der Download von 2,7 MB ist fehlgeschlagen oder hat zu lange
   gedauert (das Observatorium liefert ihn außerhalb von Hongkong langsam):
-  Er wird frühestens 2 Minuten später erneut versucht.
+  Er wird bei der nächsten Aktualisierung, 10 Minuten später, erneut versucht.
 - **Das Dashboard zeigt noch einen anderen Anbieter** — öffne die
   Einstellungen des Wetter-Widgets und wähle Hong Kong Observatory.
 - **Protokolle**: Der Tab **Protokolle** der Integration (oder `docker logs`

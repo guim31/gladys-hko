@@ -26,7 +26,7 @@ project, not affiliated with the Hong Kong Observatory.
   flooding in the northern New Territories, landslip, strong monsoon, very
   hot weather, cold weather, frost, fire danger and tsunami. The built-in
   **weather alert** scene trigger of Gladys works with them, and fires
-  within a minute of a change.
+  within about ten minutes of a change.
 - **Scene trigger "Hong Kong warning changed"**: a signal issued, upgraded
   (No. 3 → No. 8, amber → red), downgraded, updated or cancelled, with a
   sentence in your language.
@@ -242,7 +242,7 @@ Kong: Red Fire Danger Warning." If the Observatory cannot be reached,
   retries after 5 minutes, then less and less often.
 - **"Get the rain of the next hour" says the nowcast is unavailable** — the
   2.7 MB download failed or took too long (the Observatory serves it slowly
-  outside Hong Kong): it is tried again 2 minutes later at the earliest.
+  outside Hong Kong): it is tried again at the next refresh, 10 minutes later.
 - **The dashboard still shows another provider** — open the settings of the
   weather widget and pick Hong Kong Observatory.
 - **Logs**: the **Logs** tab of the integration (or `docker logs` on the

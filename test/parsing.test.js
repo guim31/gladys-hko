@@ -191,7 +191,8 @@ test('rain within the hour: dry, coming, falling, too old', () => {
   const coming = read([0, 2, 0.5, 0]);
   assert.equal(coming.minutesUntil, 20);
   assert.equal(coming.intensity, 'moderate');
-  assert.equal(coming.amount, 2.5);
+  // Prorated: all of 12:30-13:00, a third of 13:00-13:30.
+  assert.equal(coming.amount, 2.2);
   assert.equal(read([0.1, 0.2, 0, 9]).minutesUntil, null, 'traces and rain beyond the hour');
   assert.equal(read([5, 0, 0, 0]).intensity, 'heavy');
   assert.equal(read([5, 0, 0, 0]).minutesUntil, 0);
@@ -203,4 +204,16 @@ test('rain within the hour: dry, coming, falling, too old', () => {
   assert.ok(!isRainAnnounced(null, coming));
   assert.ok(!isRainAnnounced(coming, coming));
   assert.ok(!isRainAnnounced({ available: false }, coming));
+});
+
+test('one typed alert per phenomenon of the pivot: cold and frost do not hide each other', () => {
+  const warnings = parseWarnings({
+    WCOLD: { name: 'Cold Weather Warning', code: 'WCOLD', actionCode: 'ISSUE' },
+    WFROST: { name: 'Frost Warning', code: 'WFROST', actionCode: 'ISSUE' },
+  });
+  const alerts = toAlerts(warnings, (warning) => warning.name);
+  assert.deepEqual(
+    alerts.map((alert) => alert.type),
+    ['cold', undefined],
+  );
 });

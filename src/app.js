@@ -197,6 +197,13 @@ function createApp(
     ...(random ? { random } : {}),
     ...(setTimer ? { setTimer } : {}),
     ...(clearTimer ? { clearTimer } : {}),
+    onNowcast: async () => {
+      for (const house of houses.list()) {
+        if (inHongKong(house.latitude, house.longitude)) {
+          await watcher.observeRain(house, store.nowcastAt(house.latitude, house.longitude));
+        }
+      }
+    },
     onCycle: async (summary) => {
       lastSummary = summary;
       await observe();
@@ -253,12 +260,15 @@ function createApp(
       // Not an outage: the core tries its next weather provider.
       throw new HkoError(ERROR_KINDS.INVALID, 'The house is outside Hong Kong: no forecast');
     }
-    const [current, forecast] = await Promise.all([
+    // All at once: the core waits 15 s, each call 10 s at most. Only the
+    // current report is required; days and alerts are optional in the pivot.
+    const [current, forecast, warnings] = await Promise.all([
       store.load(DATASETS.current),
-      store.load(DATASETS.forecast),
+      optional(DATASETS.forecast),
+      optional(DATASETS.warnings),
     ]);
     return buildWeather(
-      { current: current.value, forecast: forecast.value, warnings: await optional('warnings') },
+      { current: current.value, forecast, warnings },
       {
         latitude,
         longitude,
@@ -310,12 +320,8 @@ function createApp(
       located.find((candidate) => inHongKong(candidate.latitude, candidate.longitude)) ??
       located[0] ??
       null;
-    const { value: current } = await store.load(DATASETS.current);
-    // A refresh that failed before may now work: run a cycle.
-    if (lastSummary?.error) {
-      scheduler.requestCycle();
-    }
     if (house !== null && !inHongKong(house.latitude, house.longitude)) {
+      // Nothing to ask the Observatory about this house.
       return Object.fromEntries(
         Object.values(LANGUAGES).map((lang) => [
           lang,
@@ -323,8 +329,15 @@ function createApp(
         ]),
       );
     }
+    const [{ value: current }, warnings] = await Promise.all([
+      store.load(DATASETS.current),
+      optional(DATASETS.warnings),
+    ]);
+    // A refresh that failed before may now work: run a cycle.
+    if (lastSummary?.error) {
+      scheduler.requestCycle();
+    }
     const here = currentAt(current, house ?? { latitude: 22.302, longitude: 114.174 });
-    const warnings = await optional(DATASETS.warnings);
     return Object.fromEntries(
       Object.values(LANGUAGES).map((lang) => [
         lang,

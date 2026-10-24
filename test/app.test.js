@@ -175,7 +175,7 @@ test('the scene actions read the data in memory', async () => {
     precipitation_probability: 15,
     wind_speed: 6.7,
     forecast_text: 'Fine. Dry during the day.',
-    summary: 'Demain : ciel dégagé, 25 à 31 °C, probabilité de pluie significative faible.',
+    summary: 'Demain : ciel dégagé, 25 à 31 °C, probabilité faible de pluie significative.',
   });
   // Today is no longer in the 9-day forecast at noon: the current report and
   // the local forecast.
@@ -232,7 +232,8 @@ test('rain coming within the hour fires the trigger once, after a dry baseline',
   assert.deepEqual(events[0].data, {
     house: 'flat',
     house_name: 'Flat',
-    precipitation: 3,
+    // 12:40: a third of the 13:30-14:00 step falls within the hour.
+    precipitation: 1,
     minutes_until: events[0].data.minutes_until,
     intensity: 'moderate',
     summary: `Pluie modérée attendue dans ${events[0].data.minutes_until} minutes.`,
@@ -389,4 +390,66 @@ test('no house located: the status asks for a location', async () => {
   const { gladys, fetchImpl } = await start({ houses: [] });
   assert.equal(fetchImpl.calls.length, 0);
   assert.match(gladys.fake.connectionStatus.message.en, /No house of Gladys has a location/);
+});
+
+test('a long warning text is cut to what a scene event may carry, and the event goes out', async () => {
+  let summary = {};
+  let info = {};
+  const { gladys, fireTimer } = await start({
+    route: hkoRoute({ warnsum: () => summary, warningInfo: () => info }),
+  });
+  summary = loadFixture('sample-warnsum-typhoon.json');
+  info = loadFixture('sample-warningInfo-typhoon.json');
+  info.details[0].contents = Array.from(
+    { length: 30 },
+    (_, i) => `Paragraph ${i}: ${'x'.repeat(90)}`,
+  );
+  await fireTimer();
+  const [typhoon] = gladys.fake.sceneEvents;
+  assert.equal(typhoon.data.signal, 'TC8NE', 'the fake Gladys accepted the event');
+  assert.equal(typhoon.data.description.length, 1000);
+  assert.ok(typhoon.data.description.endsWith('…'));
+});
+
+test('the 9-day forecast unavailable: the current weather is still served, without days', async () => {
+  const route = hkoRoute();
+  const { gladys } = await start({
+    route: (url) => (url.includes('dataType=fnd') ? { status: 200, body: '{}' } : route(url)),
+  });
+  const ack = await gladys.fake.weatherGet({
+    latitude: HOUSES.central.latitude,
+    longitude: HOUSES.central.longitude,
+    language: 'en',
+    units: 'metric',
+  });
+  assert.equal(ack.success, true, ack.error);
+  assert.equal(ack.data.weather.temperature, 30);
+  assert.deepEqual(ack.data.weather.days ?? [], []);
+});
+
+test('rain announced right after a gap in the nowcast still fires', async () => {
+  let nowcast = () => loadText('real-nowcast-hk.csv');
+  const { gladys, fireTimer } = await start({ route: hkoRoute({ nowcast: () => nowcast() }) });
+  // From 12:40 every download fails; from 13:01 the 12:00 file no longer
+  // covers the next hour: the readings are "not available".
+  nowcast = () => {
+    throw new Error('socket hang up');
+  };
+  for (let i = 0; i < 7; i += 1) {
+    await fireTimer();
+  }
+  const gap = await gladys.fake.sceneAction('get_precipitation_next_hour', {});
+  assert.equal(gap.data.outputs.available, false, 'a real gap at 13:20');
+  assert.deepEqual(gladys.fake.sceneEvents, []);
+  // Then a file issued at 13:00 shows rain from 14:00.
+  const wet = withRain(loadText('real-nowcast-hk.csv'), HOUSES.central, [0, 0, 3, 0])
+    .replaceAll('202610241200,', '202610241300,')
+    .replace(
+      /,20261024(\d{4}),/g,
+      (match, hhmm) => `,20261024${String(Number(hhmm) + 100).padStart(4, '0')},`,
+    );
+  nowcast = () => wet;
+  await fireTimer();
+  const events = gladys.fake.sceneEvents.filter((event) => event.key === 'precipitation_expected');
+  assert.equal(events.length, 1);
 });

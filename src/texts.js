@@ -274,10 +274,14 @@ const TEMPLATES = Object.freeze({
     es: (label) => `${label} en este momento.`,
   },
   expected: {
-    en: (label, minutes) => `${label} expected in ${minutes} minutes.`,
-    fr: (label, minutes) => `${label} attendue dans ${minutes} minutes.`,
-    de: (label, minutes) => `${label} in ${minutes} Minuten erwartet.`,
-    es: (label, minutes) => `${label} prevista en ${minutes} minutos.`,
+    en: (label, minutes) =>
+      `${label} expected in ${minutes} ${plural(minutes, 'minute', 'minutes')}.`,
+    fr: (label, minutes) =>
+      `${label} attendue dans ${minutes} ${plural(minutes, 'minute', 'minutes')}.`,
+    de: (label, minutes) =>
+      `${label} in ${minutes} ${plural(minutes, 'Minute', 'Minuten')} erwartet.`,
+    es: (label, minutes) =>
+      `${label} prevista en ${minutes} ${plural(minutes, 'minuto', 'minutos')}.`,
   },
   temperatures: {
     en: (min, max, unit) => `${min} to ${max} ${unit}`,
@@ -287,7 +291,7 @@ const TEMPLATES = Object.freeze({
   },
   rainChance: {
     en: (word) => `${word} chance of significant rain`,
-    fr: (word) => `probabilité de pluie significative ${word}`,
+    fr: (word) => `probabilité ${word} de pluie significative`,
     de: (word) => `${word} Wahrscheinlichkeit für ergiebigen Regen`,
     es: (word) => `probabilidad ${word} de lluvia significativa`,
   },

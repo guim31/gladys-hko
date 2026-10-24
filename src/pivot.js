@@ -80,7 +80,8 @@ function currentAt(current, { latitude, longitude }) {
 /**
  * @description Build the pivot weather of a location.
  * @param {object} data - `{ current, forecast, warnings }`: the parsed
- * report, the parsed 9-day forecast, the parsed warnings (or null).
+ * report, the parsed 9-day forecast (or null: no days), the parsed warnings
+ * (or null).
  * @param {object} options - Options.
  * @param {number} options.latitude - The latitude of the house.
  * @param {number} options.longitude - The longitude of the house.
@@ -110,7 +111,7 @@ function buildWeather(
     is_day: isSunUp(now, latitude, longitude),
   });
 
-  weather.days = forecast.days
+  weather.days = (forecast?.days ?? [])
     .filter((day) => day.date >= hkDate(now))
     .slice(0, MAX_DAYS)
     .map((day) => {
