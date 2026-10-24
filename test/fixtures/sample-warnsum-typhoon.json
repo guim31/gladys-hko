@@ -1,0 +1,26 @@
+{
+  "WTCSGNL": {
+    "name": "Tropical Cyclone Warning Signal",
+    "code": "TC8NE",
+    "type": "Gale or Storm Signal No. 8 Northeast",
+    "actionCode": "ISSUE",
+    "issueTime": "2026-09-14T09:40:00+08:00",
+    "updateTime": "2026-09-14T09:40:00+08:00"
+  },
+  "WRAIN": {
+    "name": "Rainstorm Warning Signal",
+    "code": "WRAINA",
+    "actionCode": "ISSUE",
+    "issueTime": "2026-09-14T10:15:00+08:00",
+    "expireTime": "2026-09-14T13:15:00+08:00",
+    "updateTime": "2026-09-14T10:15:00+08:00"
+  },
+  "WFIRE": {
+    "name": "Fire Danger Warning",
+    "code": "WFIRER",
+    "type": "Red",
+    "actionCode": "CANCEL",
+    "issueTime": "2026-09-13T06:00:00+08:00",
+    "updateTime": "2026-09-14T06:00:00+08:00"
+  }
+}

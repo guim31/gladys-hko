@@ -30,6 +30,15 @@ Gladys before reporting a problem.
 
 In scope: the code of this repository and the Docker image it publishes.
 
+The integration stores nothing on disk: `/data` stays empty, and the weather
+report, forecasts, warnings and rainfall nowcast live in memory only. It holds
+no secret (the Hong Kong Observatory needs no key) and makes only HTTPS GET
+requests to `data.weather.gov.hk`, which carry no location nor anything about
+the user: every answer is the same for everyone. It reads the houses through the
+Gladys host API (`location: true`) and opens no port. The answers are parsed as
+data only (`JSON.parse`, a CSV split by hand, no evaluation), with bounded
+texts, then bounded again by the core.
+
 Out of scope: Gladys Assistant itself (see its
 [security policy](https://github.com/GladysAssistant/Gladys/security/policy)),
-and the third-party services and devices the integration talks to.
+and the services of the Hong Kong Observatory.

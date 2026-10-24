@@ -1,0 +1,10 @@
+{
+  "details": [
+    {
+      "contents": ["The fire danger warning is Red and the fire risk is Extreme."],
+      "warningStatementCode": "WFIRE",
+      "subtype": "WFIRER",
+      "updateTime": "2026-10-23T06:00:00+08:00"
+    }
+  ]
+}
