@@ -1,61 +1,271 @@
-# Demo Devices Template
+# Hong Kong Observatory
 
-This is the user documentation of the integration. Gladys re-hosts this file
-and shows a permanent **Documentation** link to it in the Configuration screen
-(in the user's language, with English as the fallback) — it is when
-configuring that the user needs it most. Keep the short onboarding hints in
-the `section` blocks of the manifest `config_schema`; put the long
-step-by-step (screenshots, troubleshooting…) here.
+The weather of Hong Kong in Gladys, from the
+[Hong Kong Observatory](https://www.hko.gov.hk/en/) (HKO, 香港天文台): the
+**temperature of the nearest weather station**, the **9-day forecast**, the
+**rainfall nowcast** of the next hour and the **warnings and signals** in
+force (tropical cyclone signals, rainstorm warnings, very hot weather…). Open
+data: **no account, no API key**.
+
+Source: Hong Kong Observatory, open data published through
+[DATA.GOV.HK](https://data.gov.hk/en/). This integration is a community
+project, not affiliated with the Hong Kong Observatory.
 
 ## What you get
 
-Six demo devices show up after installation: a weather station (real data
-from Open-Meteo), a switch, a dimmable light, a smart plug with power
-metering, a motion sensor and a camera.
+- **The Gladys weather widget and the chat assistant** use the Observatory:
+  the temperature measured by the station nearest your house (27 stations,
+  updated every 10 minutes), the humidity measured at the Observatory, the UV
+  index of the past hour, the current weather icon, sunrise and sunset, and
+  the next 8 days (sky, minimum and maximum temperatures, humidity, wind,
+  chance of significant rain). Everything is shown in **°C and m/s** or in
+  **°F and mph**, following the unit system of each Gladys user.
+- **The warnings and signals in force**, shown as alerts on the weather
+  widget: tropical cyclone signals No. 1 to No. 10 and the pre-No. 8
+  announcement, amber, red and black rainstorm warnings, thunderstorm,
+  flooding in the northern New Territories, landslip, strong monsoon, very
+  hot weather, cold weather, frost, fire danger and tsunami. The built-in
+  **weather alert** scene trigger of Gladys works with them, and fires
+  within a minute of a change.
+- **Scene trigger "Hong Kong warning changed"**: a signal issued, upgraded
+  (No. 3 → No. 8, amber → red), downgraded, updated or cancelled, with a
+  sentence in your language.
+- **Scene trigger "Rain expected within the hour"**, from the Observatory's
+  rainfall nowcast.
+- **Scene action "Get the rain of the next hour"**.
+- **Scene action "Get the forecast of the day"** (today or tomorrow).
+- **Scene action "Get the Hong Kong warnings"**: the typhoon signal number,
+  the rainstorm colour and the highest severity, to gate a scene on them.
+
+No extra widget: the Gladys weather widget already shows the current
+weather, the forecast and the warnings.
+
+**Hong Kong only.** For a house elsewhere, the integration answers "no
+forecast" and Gladys uses its next weather provider.
+
+## Installation
+
+1. Check that your house has a location in Gladys: **Settings → Houses**,
+   then the address or the position on the map.
+2. Install **Hong Kong Observatory** from the integration store (or
+   **Integrations → Install from GitHub** with the address
+   `https://github.com/guim31/gladys-hko`). Gladys asks you to allow access
+   to the location of your houses: the integration picks the nearest station
+   and the nowcast of each house, and checks that it is in Hong Kong.
+3. Open the **Configuration** tab and click **Test the Observatory**. The
+   answer shows the temperature of the station nearest your house and the
+   warnings in force.
+
+That's it: the weather widget of your dashboard now shows the Observatory.
+If another weather integration is installed, pick the provider in the
+settings of the weather widget.
+
+Gladys 5.2 or later is required.
 
 ## Configuration
 
-1. Open the **Configuration** tab of the integration.
-2. Set the **latitude** and **longitude** the demo weather station should
-   observe (they default to Paris), and pick your temperature unit.
-   The **refresh interval** sets how often the weather station and the
-   plug's power are read: every 5 minutes by default, every minute at most.
-3. Save: the devices appear in the **Discovery** tab, ready to be added.
+Nothing is mandatory.
 
-The **Prefer the local connection** toggle drives the demo plug: it reports
-the channel it actually uses as a badge (local or cloud), with an orange dot
-when it runs degraded (local refused, cloud fallback).
+- **Units of the scene values** — the units of the temperatures, wind and
+  rain the integration puts in scene variables. **Automatic** follows the
+  unit system of the last user who looked at the weather; pick **Metric** or
+  **US** to set it. The weather widget always follows each user's own
+  preference.
+- **Language of the scene texts** — the language of the sentences the
+  integration puts in scene variables ("Issued: No. 8 Northeast Gale or
+  Storm Signal."): English, French, German or Spanish. French by default;
+  **Automatic** follows the language of your Gladys. The texts of the
+  Observatory itself (forecast text, warning details) are in English.
 
-## Actions
+## Refresh rate and the Observatory's terms
 
-- **Test the weather provider** — performs a live request to Open-Meteo and
-  shows the current temperature and humidity under the button.
-- **Identify a device** — pick one of your devices in the list and it will
-  signal itself (the demo light "blinks" in the logs).
+The Observatory publishes these data openly on DATA.GOV.HK, without a
+published rate limit. The integration stays light:
+
+- a timer runs **every 10 minutes**, plus up to 2 random minutes so that
+  every Gladys does not call at the same second;
+- the **current weather report and the warnings** are read every 10 minutes,
+  the **9-day forecast and the local forecast** every 30 minutes (small JSON
+  answers, the same for every house);
+- the **rainfall nowcast** is a 2.7 MB file covering the Pearl River Delta,
+  downloaded **every 30 minutes** (about 130 MB a day);
+- nothing is called while no house of Gladys is in Hong Kong, and opening
+  the dashboard costs nothing: Gladys is served from memory;
+- it pauses if the Observatory asks to slow down (error 429) or refuses the
+  requests (error 403).
+
+During an outage, the last report and forecast stay visible for 3 hours at
+most.
 
 ## Scenes
 
-The integration adds its own cards to the scene editor (Gladys 5.1 or
-later), under the **Integrations** category:
+The integration adds its cards to the scene editor, in the **Integrations**
+category. The **House** field lists your houses; only the houses in Hong
+Kong are concerned.
 
-- **Motion detected** (trigger) — starts the scene when a demo motion sensor
-  sees something move. Optionally pick the sensor and what moved (person,
-  animal); left empty, any detection matches. The following actions can
-  read what moved with `{{triggerEvent.data.target}}`.
-- **Identify a device** (action) — makes the chosen device signal itself.
-  It returns whether the device could signal itself, so the following
-  actions can depend on it.
+### Hong Kong warning changed
 
-## Dashboard
+Trigger: starts the scene when a warning or signal of the Observatory is
+**issued**, **upgraded** (No. 3 → No. 8, amber → red…), **downgraded**,
+**updated** (No. 8 changing quadrant, reissued, extended) or **cancelled**.
+It fires for every house in Hong Kong, never on the first reading after a
+restart, nor when the Observatory cannot be reached.
 
-Add the **Demo status** widget to a dashboard: it shows the live
-temperature of the weather station and the power of the office plug, the
-connection the plug currently uses (orange when degraded) and the observed
-location. Its **Identify the light** button makes the demo light signal
-itself.
+Optional filters (empty: everything matches):
+
+- **House**;
+- **Change**: issued, upgraded, downgraded, updated, cancelled;
+- **Severity**: minor (standby signal No. 1), moderate (No. 3, pre-No. 8
+  announcement, amber rainstorm, thunderstorm, very hot, cold, frost, strong
+  monsoon, yellow fire danger), severe (No. 8, red rainstorm, landslip,
+  flooding, red fire danger), extreme (No. 9, No. 10, black rainstorm,
+  tsunami);
+- **Phenomenon**: tropical cyclone, rainstorm, thunderstorm, flooding,
+  landslip, strong monsoon, very hot weather, cold weather, frost, fire
+  danger, tsunami, other.
+
+Variables for the next actions: the house, the change (`issued`,
+`upgraded`, `downgraded`, `updated`, `lifted`), the severity (`minor`,
+`moderate`, `severe`, `extreme`), the phenomenon (`tropical_cyclone`,
+`rainstorm`…), the signal code of the Observatory (`TC8NE`, `WRAINR`…), the
+name of the signal in your language, the details of the Observatory (in
+English), and a **summary** ready to send, for example: "Upgraded: Increasing
+Gale or Storm Signal No. 9 (was No. 8 Northeast Gale or Storm Signal)."
+
+### Rain expected within the hour
+
+Trigger: starts the scene when the rainfall nowcast shows rain at the house
+within the next hour, where the previous reading showed none. It fires once
+per event, at most once an hour per house, and never on the first reading
+after a restart.
+
+Optional filters (empty: everything matches):
+
+- **House**;
+- **Intensity**: light (under 2.5 mm/h), moderate (up to 7.6 mm/h) or heavy.
+
+Variables for the next actions: the name of the house, the intensity
+(`light`, `moderate`, `heavy`), the minutes until it starts (0 if it is
+already raining), the rain expected in the next hour, and a **summary**
+ready to send, for example: "Moderate rain expected in 20 minutes."
+
+### Get the rain of the next hour
+
+Action: tells the scene whether rain is coming within the hour (**Rain
+expected**: yes or no), when, how hard, how much, and the same summary.
+Leave **House** empty for your first house that has a location. If the
+nowcast does not cover the hour (house outside Hong Kong, download failed),
+**Nowcast available** is no: do not read it as dry.
+
+### Get the forecast of the day
+
+Action: reads the forecast of **today** or **tomorrow** and returns:
+
+- the sky, as a Gladys code (`clear`, `partly-cloudy`, `rain`…) and in words
+  ("Rain");
+- the minimum and maximum temperatures, and humidity;
+- the chance of significant rain as the Observatory says it (`low`,
+  `medium_low`, `medium`, `medium_high`, `high`) and as a percentage (the
+  middle of the class: 15, 38, 50, 63 or 85);
+- the wind, from the forecast words;
+- the forecast text of the Observatory (in English);
+- a **summary**, for example: "Tomorrow: clear sky, 25 to 31 °C, low chance
+  of significant rain."
+
+The 9-day forecast starts tomorrow once the morning update is out: **today**
+then gives the current sky and the Observatory's forecast text for the rest
+of the day, without temperatures.
+
+### Get the Hong Kong warnings
+
+Action: returns whether at least one warning is in force, how many, the
+**highest severity** (`none`, `minor`, `moderate`, `severe`, `extreme`), the
+**tropical cyclone signal** (0, 1, 3, 8, 9 or 10), the **rainstorm signal**
+(`none`, `amber`, `red`, `black`), the phenomenon, code and name of the
+highest one, and a **summary**, for example: "1 warning in force in Hong
+Kong: Red Fire Danger Warning." If the Observatory cannot be reached,
+**Warnings available** is no.
+
+## Scene examples
+
+- **Typhoon coming**: trigger "Hong Kong warning changed", phenomenon
+  tropical cyclone, change issued or upgraded, severity severe or extreme,
+  then a notification with the **summary**, the shutters closed and the
+  balcony lights off.
+- **Black rain**: trigger "Hong Kong warning changed", phenomenon rainstorm,
+  severity extreme, then a message to stay home.
+- **Bring the washing in**: trigger "Rain expected within the hour", then a
+  notification with the **summary** variable.
+- **Morning weather**: at 7:00, action "Get the forecast of the day"
+  (today), then "Get the Hong Kong warnings", then a message with both
+  summaries; skip the garden watering if the rainstorm signal is not
+  `none`.
+
+## Limits
+
+- **Developed without a Gladys running in Hong Kong**: the integration is
+  tested against real answers of the Observatory (24 October 2026, with a
+  red fire danger warning in force) and, for the typhoon and rainstorm
+  signals, against the documented format of the API. Feedback welcome.
+- **Hong Kong only** (see above).
+- **No hourly forecast**: the open data of the Observatory has none, so the
+  24-hour strip of the weather widget stays empty; the days come from the
+  9-day forecast.
+- **The station is the nearest one** among the 27 of the current weather
+  report (the hill-top stations are left out). The humidity is the one of
+  the Observatory, the UV index the one of King's Park.
+- **The current sky** is the Observatory's icon for the whole territory.
+- **Territory-wide warnings**: the Observatory gives no area; every house in
+  Hong Kong gets every warning, the northern New Territories flooding
+  announcement included.
+- **Texts in English**: the integration translates the signal names, the
+  sky and the change, not the details nor the forecast text.
+- **The rainfall nowcast** has a 2 km grid and half-hour steps; read every
+  30 minutes, a shower that starts between two downloads is announced by the
+  next one.
+- **The chance of rain** is a class; the percentage given to Gladys is the
+  middle of it.
+- The integration needs Gladys 5.2 or later.
 
 ## Troubleshooting
 
-The integration logs everything it does: check the integration logs from the
-Gladys UI (or `docker logs` on the host) with `LOG_LEVEL=debug` for the full
-detail.
+- **"No house of Gladys has a location"** — set the location of your house in
+  **Settings → Houses**.
+- **"No house of Gladys is in Hong Kong"** — the Observatory only covers Hong
+  Kong: check the location of your house in **Settings → Houses**.
+- **"The Observatory asks to slow down"** — too many requests from your
+  Internet connection: the integration waits and retries by itself.
+- **"The Observatory refuses the requests (HTTP 403)"** — update the
+  integration.
+- **"The Hong Kong Observatory is unreachable for now"** — Gladys cannot
+  reach `data.weather.gov.hk`: check its Internet access. The integration
+  retries after 5 minutes, then less and less often.
+- **"Get the rain of the next hour" says the nowcast is unavailable** — the
+  2.7 MB download failed or took too long (the Observatory serves it slowly
+  outside Hong Kong): it is tried again 2 minutes later at the earliest.
+- **The dashboard still shows another provider** — open the settings of the
+  weather widget and pick Hong Kong Observatory.
+- **Logs**: the **Logs** tab of the integration (or `docker logs` on the
+  host) shows the start, each warning change, the problems and the return of
+  the Observatory, once each. Start the container with `LOG_LEVEL=debug` to
+  see every refresh.
+
+## Privacy
+
+Nothing about you leaves Gladys: every request asks for data that is the
+same for everyone (the territory's report, forecast, warnings and nowcast).
+The location of your houses is only used inside the container, to pick the
+nearest station and nowcast point. No account, no key, nothing is written to
+disk.
+
+## Credits
+
+Current weather, forecasts, warnings and rainfall nowcast: Hong Kong
+Observatory ([hko.gov.hk](https://www.hko.gov.hk/en/)), open data published
+through [DATA.GOV.HK](https://data.gov.hk/en/) under its
+[terms of use](https://data.gov.hk/en/terms-and-conditions); the data are
+converted to the Gladys weather format (units, icons, days, alerts). The
+icon and signal vocabulary follows the documentation of the Observatory's
+open data API. Inspired by the Home Assistant `hko` integration (Apache
+2.0). Sunrise and sunset are computed with the NOAA solar calculator
+algorithms.

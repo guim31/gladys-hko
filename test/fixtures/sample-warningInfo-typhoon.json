@@ -1,0 +1,19 @@
+{
+  "details": [
+    {
+      "contents": [
+        "The No. 8 Northeast Gale or Storm Signal is in force.",
+        "This means that winds with mean speeds of 63 kilometres per hour or more are expected from the northeast quarter."
+      ],
+      "warningStatementCode": "WTCSGNL",
+      "subtype": "TC8NE",
+      "updateTime": "2026-09-14T09:40:00+08:00"
+    },
+    {
+      "contents": ["The Amber Rainstorm Warning Signal was issued at 10:15 a.m."],
+      "warningStatementCode": "WRAIN",
+      "subtype": "WRAINA",
+      "updateTime": "2026-09-14T10:15:00+08:00"
+    }
+  ]
+}

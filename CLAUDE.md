@@ -30,17 +30,34 @@ pushing.
 
 ## Architecture
 
+A **weather** integration (manifest `type: "weather"`): no devices, a provider
+API. Gladys asks for the weather of a house (`onWeatherGet`); for a house in
+Hong Kong the integration answers in the pivot format of the core from what it
+keeps in memory (current weather report, 9-day forecast, warnings as
+`alerts`); elsewhere it throws, and the core moves on to its next provider.
+
 ```
-index.js                          SDK wiring only: handlers registered before connect()
-src/devices/index.js              registry of the device blueprints + dispatch helpers
-src/devices/<type>.js             one device type per file (buildDevice, onPoll, onSetValue...)
-src/scenes.js                     scene action handlers (manifest `scene_actions`)
-src/widgets.js                    dashboard widget handlers (manifest `widgets`)
+index.js                          SDK wiring only: createApp() then connect()
+src/app.js                        the integration on an injected client: handlers, status, triggers, lifecycle
+src/api.js                        the Observatory requests (URLs, User-Agent, timeouts, error kinds)
+src/area.js                       the Hong Kong box, the station coordinates, Hong Kong days (UTC+8)
+src/reports.js                    rhrread / fnd / flw → slim current report and forecasts
+src/conditions.js                 HKO icons → Gladys conditions, PSR classes, wind words
+src/warnings.js                   warnsum + warningInfo → warnings (level, severity, type), pivot alerts, diff
+src/nowcast.js                    gridded rainfall nowcast: nearest grid point, rain within the hour
+src/store.js                      one cache per data set (10 / 30 min), shared calls, 429/403 pauses, stale ≤ 3 h
+src/scheduler.js                  refresh timer: 10 min + 0-2 min jitter, retries, nothing outside Hong Kong
+src/pivot.js                      data → pivot weather (current, 8 days, alerts)
+src/scene-triggers.js             "precipitation_expected" and "warning_changed" (baselines, cooldown)
+src/scene-actions.js              "get_precipitation_next_hour", "get_day_forecast", "get_warnings"
+src/houses.js                     the houses of Gladys (getHouses, `location: true`)
+src/sun.js                        computed sunrise/sunset (NOAA)
+src/failure-log.js                repeated failures logged once (warn, debug, then info on recovery)
 src/config.js                     DEFAULT_CONFIG (mirrors the manifest defaults) + normalization
-src/weather.js                    example driver (Open-Meteo)
-gladys-assistant-integration.json manifest: name, config_schema, actions, image...
-docs/en.md, docs/fr.md            user documentation, re-hosted by Gladys (mandatory)
-test/                             node --test, against the SDK's fake Gladys (integration-sdk/testing)
+src/texts.js, src/units.js        texts in en/fr/de/es, metric → us conversions
+gladys-assistant-integration.json manifest: name, config_schema, actions, scene cards, image...
+docs/{en,fr,de,es}.md             user documentation, re-hosted by Gladys (en and fr mandatory)
+test/                             node --test, against the SDK's fake Gladys and real API responses
 .github/scripts/release.mjs       release helpers (manifest bump, changelog), tested in test/
 ```
 
@@ -70,8 +87,9 @@ test/                             node --test, against the SDK's fake Gladys (in
   `type: "provider"`: 5.1.0). `test/manifest.test.js` ties the manifest to the
   code (defaults, action, scene and widget handlers): change both sides
   together.
-- **User-facing text** is bilingual (English and French): action messages,
-  manifest texts, and `docs/en.md` / `docs/fr.md`, kept in sync.
+- **User-facing text** exists in English, French, German and Spanish: action
+  messages, scene texts, manifest texts, and `docs/{en,fr,de,es}.md`, kept in
+  sync (`test/i18n.test.js`).
 - **Style.** Prettier formats, ESLint catches mistakes. Comments explain why,
   in English. Tests never touch the network.
 
@@ -233,3 +251,44 @@ long, et sur un « Sie »/« Ihr… » de politesse en allemand. Le store exige 
 - Docs `en`, `fr`, `de`, `es` avec les mêmes sections.
 - Chauffe, ouverture, sécurité : ne rien rendre pilotable « comme un thermostat » ou par un assistant
   vocal quand une erreur serait dangereuse (leçon d'OctoPrint).
+
+## Hong Kong Observatory (cette intégration)
+
+**API** (données ouvertes DATA.GOV.HK, sans clé, sans limite publiée ; « Hong Kong Observatory ») :
+
+- `https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=<type>&lang=en` : `rhrread`
+  (bulletin actuel : température de 27 stations sans coordonnées, humidité de l'Observatoire, UV de King's
+  Park, icône), `fnd` (9 jours), `flw` (texte local), `warnsum` + `warningInfo` (signaux en vigueur, textes).
+  Langues : `en`, `tc`, `sc` seulement ; on lit `en` et on traduit noms de signaux et conditions.
+- Prévision immédiate : `https://data.weather.gov.hk/weatherAPI/hko_data/F3/Gridded_rainfall_nowcast.csv`,
+  grille 121 × 121 (~2 km) sur le delta de la rivière des Perles, 4 pas d'une demi-heure, mm cumulés,
+  heure de Hong Kong `YYYYMMDDHHmm`. **2,7 Mo, sans gzip, servi lentement** (30 à 80 s depuis la France) :
+  seul le minuteur le télécharge (150 s max), toutes les 30 min ; jamais une requête météo du cœur.
+- Réponses réelles du 24/10/2026 dans `test/fixtures/` (voir leur README) ; le typhon et la pluie ambre
+  sont écrits à la main au format documenté (aucun en cours ce jour-là).
+
+**Pièges découverts.**
+
+- **Pas de prévision horaire** dans les données ouvertes : pas de `hours` dans le pivot. La prévision
+  « locale » OCF (`maps.weather.gov.hk/ocf/dat/<station>.xml`, horaire) existe mais n'est pas au
+  catalogue des données ouvertes : écartée.
+- `fnd` commence **demain** dès la mise à jour du matin (11 h 30) : « aujourd'hui » se rabat sur
+  l'icône actuelle et le texte `flw`, sans températures.
+- `warnsum` garde un signal levé avec `actionCode: "CANCEL"` un moment : à écarter. Signal de typhon :
+  entrée `WTCSGNL`, `code` TC1/TC3/TC8NE…/TC9/TC10 ; identité d'un avertissement = la clé d'instruction
+  (`WTCSGNL`, `WRAIN`…), niveau = rang du code. Un TC8 qui change de quadrant est « updated ».
+- `uvindex` vaut `""` la nuit (pas un objet) ; `mintempFrom00To09` et consorts sont des chaînes vides.
+- PSR (probabilité de pluie significative) est une classe : le pivot reçoit le milieu (15, 38, 50, 63, 85).
+- Le vent de `fnd` est en mots (« East to northeast force 4, force 5 offshore later. ») : première
+  direction, premier Beaufort (haut de la fourchette), converti au milieu de la bande.
+- Hong Kong reste en UTC+8 toute l'année : les jours sont coupés à minuit de Hong Kong, pas au `TZ` de
+  Gladys.
+- Une panne réseau ou 5xx fait échouer tous les jeux de données : **une seule** ligne `warn` (clé
+  commune), la prévision immédiate a sa propre ligne `info`.
+- Locale de la machine de dev en `fr_FR` : `awk` y lit « 22.15 » de travers ; `LC_ALL=C` pour retailler
+  la prévision immédiate.
+
+**Choix (à revoir si besoin).** Type `weather` comme FMI et Met Éireann ; avertissements valables pour
+tout le territoire (l'API ne donne pas de zone) ; maison hors de la boîte 22,1-22,6° N, 113,8-114,5° E →
+« pas de prévision » ; gravités CAP : TC1 mineure, TC3/ambre/jaune modérée, TC8/rouge sévère,
+TC9/TC10/noire/tsunami extrême.
