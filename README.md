@@ -34,7 +34,7 @@ weather provider. Full user documentation: [`docs/en.md`](docs/en.md)
 
 ## Install
 
-Requires Gladys 5.2 or later, and a house with a location (**Settings →
+Requires Gladys 5.3 or later, and a house with a location (**Settings →
 Houses**).
 
 In Gladys, **Integrations → Install from GitHub**, with the address

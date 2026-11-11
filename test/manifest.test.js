@@ -80,9 +80,9 @@ test('a weather provider for the cloud, reading the houses', () => {
   }
 });
 
-test('scene cards and house lists require Gladys >= 5.2.0', () => {
+test('scene cards and house lists require Gladys >= 5.2.0, countries 5.3.0', () => {
   assert.ok(allFields.some((field) => field.source === 'houses'));
-  assert.equal(manifest.gladys_version, '>=5.2.0');
+  assert.equal(manifest.gladys_version, '>=5.3.0');
 });
 
 test('house fields list the houses of Gladys, never static options', () => {
@@ -214,4 +214,9 @@ test('no secret: the Observatory needs no key, and the source is credited', () =
   for (const text of Object.values(intro.description)) {
     assert.ok(text.includes('Hong Kong Observatory (DATA.GOV.HK)'), text);
   }
+});
+
+test('the catalog countries: Hong Kong, which needs Gladys >= 5.3.0', () => {
+  assert.deepEqual(manifest.countries, ['HK']);
+  assert.match(manifest.gladys_version, /^>=\s*5\.3\.0$/, 'countries needs Gladys 5.3.0');
 });

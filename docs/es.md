@@ -65,7 +65,7 @@ Eso es todo: el widget del tiempo de su panel muestra ahora el Observatorio.
 Si hay otra integración del tiempo instalada, elija el proveedor en los
 ajustes del widget del tiempo.
 
-Se necesita Gladys 5.2 o posterior.
+Se necesita Gladys 5.3 o posterior.
 
 ## Configuración
 
@@ -235,7 +235,7 @@ disponibles** es no.
   descargas lo anuncia la siguiente.
 - **La probabilidad de lluvia** es una clase; el porcentaje dado a Gladys es
   su centro.
-- La integración necesita Gladys 5.2 o posterior.
+- La integración necesita Gladys 5.3 o posterior.
 
 ## Solución de problemas
 
