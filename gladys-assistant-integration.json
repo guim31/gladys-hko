@@ -8,8 +8,8 @@
     "de": "Aktuelles Wetter, 9-Tage-Vorhersage, Regen-Kurzfrist und Warnsignale für Hongkong vom HKO.",
     "es": "Tiempo actual, previsión a 9 días, lluvia inminente y señales de aviso para Hong Kong, del HKO."
   },
-  "version": "1.0.0",
-  "docker_image": "ghcr.io/guim31/gladys-hko:1.0.0",
+  "version": "1.0.1",
+  "docker_image": "ghcr.io/guim31/gladys-hko:1.0.1",
   "gladys_version": ">=5.3.0",
   "cover_image": "https://raw.githubusercontent.com/guim31/gladys-hko/main/cover.png",
   "categories": ["environment"],

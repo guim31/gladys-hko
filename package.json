@@ -1,6 +1,6 @@
 {
   "name": "gladys-hko",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "Hong Kong Observatory weather provider for Gladys Assistant: current weather, 9-day forecast, warning signals, rain nowcast.",
   "type": "module",

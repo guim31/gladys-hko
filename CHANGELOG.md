@@ -10,6 +10,8 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-11-13
+
 ### Changed
 
 - Declared for Hong Kong only (`countries: ["HK"]`): the Gladys catalog of an
@@ -40,5 +42,6 @@ the notes of the version's GitHub Release.
 - "Test the Observatory" in the configuration tab.
 - Texts and documentation in English, French, German and Spanish.
 
-[Unreleased]: https://github.com/guim31/gladys-hko/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/guim31/gladys-hko/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/guim31/gladys-hko/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/guim31/gladys-hko/releases/tag/v1.0.0
