@@ -60,7 +60,7 @@ That's it: the weather widget of your dashboard now shows the Observatory.
 If another weather integration is installed, pick the provider in the
 settings of the weather widget.
 
-Gladys 5.2 or later is required.
+Gladys 5.3 or later is required.
 
 ## Configuration
 
@@ -225,7 +225,7 @@ Kong: Red Fire Danger Warning." If the Observatory cannot be reached,
   next one.
 - **The chance of rain** is a class; the percentage given to Gladys is the
   middle of it.
-- The integration needs Gladys 5.2 or later.
+- The integration needs Gladys 5.3 or later.
 
 ## Troubleshooting
 

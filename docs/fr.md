@@ -65,7 +65,7 @@ C’est tout : le widget météo de votre tableau de bord affiche maintenant
 l’Observatoire. Si une autre intégration météo est installée, choisissez le
 fournisseur dans les réglages du widget météo.
 
-Gladys 5.2 ou plus récent est nécessaire.
+Gladys 5.3 ou plus récent est nécessaire.
 
 ## Configuration
 
@@ -238,7 +238,7 @@ injoignable, **Avertissements disponibles** vaut non.
   téléchargements est annoncée par le suivant.
 - **La probabilité de pluie** est une classe ; le pourcentage donné à Gladys
   en est le milieu.
-- L’intégration nécessite Gladys 5.2 ou plus récent.
+- L’intégration nécessite Gladys 5.3 ou plus récent.
 
 ## Dépannage
 
